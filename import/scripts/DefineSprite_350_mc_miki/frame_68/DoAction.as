@@ -1,0 +1,10 @@
+this.taichi_mc._x += 25;
+control.nogravity = false;
+control.vx = 30;
+control.vy = 2;
+control.slow2(20,1);
+control.py = (- taichi_mc._y) / 150;
+control.r = this.taichi_mc._rotation + 5;
+hittarget._visible = true;
+taichi_mc._visible = false;
+delete moveobjsub;

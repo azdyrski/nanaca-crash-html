@@ -1,0 +1,9 @@
+接触すると加速する。
+--- RECORDSEPARATOR ---
+加速角度斜め
+--- RECORDSEPARATOR ---
+45
+--- RECORDSEPARATOR ---
+度の
+--- RECORDSEPARATOR ---
+標準型。

@@ -1,0 +1,2 @@
+this.stop();
+delete moveobjsub;

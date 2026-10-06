@@ -1,0 +1,9 @@
+角度を変えて太一を
+--- RECORDSEPARATOR ---
+跳ね返す。
+--- RECORDSEPARATOR ---
+加速
+--- RECORDSEPARATOR ---
+/
+--- RECORDSEPARATOR ---
+減速はしない。

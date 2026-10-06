@@ -1,0 +1,25 @@
+太一が高度３～
+--- RECORDSEPARATOR ---
+10
+--- RECORDSEPARATOR ---
+ｍの範囲内にいるとき、
+--- RECORDSEPARATOR ---
+画面内でマウスボタンを押すと七香の空中追突技が発動します。
+--- RECORDSEPARATOR ---
+　　
+--- RECORDSEPARATOR ---
+太一が下降中
+--- RECORDSEPARATOR ---
+：上向きに跳ね返して加速。３回まで。連続使用可能。
+--- RECORDSEPARATOR ---
+　　
+--- RECORDSEPARATOR ---
+太一が上昇中
+--- RECORDSEPARATOR ---
+：下向きに跳ね返して加速。回数制限なし。連続使用不可。
+--- RECORDSEPARATOR ---
+　　　　　　　　　　　　（太一が
+--- RECORDSEPARATOR ---
+AERIAL
+--- RECORDSEPARATOR ---
+圏内に一定時間滞空すると再度使用可能）

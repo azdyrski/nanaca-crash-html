@@ -1,0 +1,21 @@
+キャラクターとの接触時に特定の条件が満たされていると
+--- RECORDSEPARATOR ---
+画面に
+--- RECORDSEPARATOR ---
+SPECIAL
+--- RECORDSEPARATOR ---
+の文字が表示されます。
+--- RECORDSEPARATOR ---
+このとき画面内でマウスボタンを押すと強力な特殊技が発動します。
+--- RECORDSEPARATOR ---
+発動可能なキャラクターは美希・霧・冬子・見里・七香の５人。
+--- RECORDSEPARATOR ---
+（発動条件はキャラクター毎に異なります）
+--- RECORDSEPARATOR ---
+マウス操作が間に合わなかった場合は通常アクションとなります。
+--- RECORDSEPARATOR ---
+待ち時間は約
+--- RECORDSEPARATOR ---
+0.7
+--- RECORDSEPARATOR ---
+秒です。

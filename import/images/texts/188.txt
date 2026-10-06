@@ -1,0 +1,9 @@
+SPECIAL
+--- RECORDSEPARATOR ---
+発動条件が
+--- RECORDSEPARATOR ---
+成立するとテレポート
+--- RECORDSEPARATOR ---
+して出現。４タイプの
+--- RECORDSEPARATOR ---
+特殊能力を操る。

@@ -1,0 +1,13 @@
+this.stop();
+this.special_mc._visible = false;
+control.special = this.special_mc;
+this.special_mc.btn = this.menu_mc;
+control.contact = this.contact_mc;
+out_mc._visible = false;
+highscore_mc.init = control.best;
+this.meter_mc.btn = this.menu_mc;
+this.aerial_mc.btn = this.menu_mc;
+control.aerial = this.aerial_mc;
+control.speed = this.speed_mc;
+this.chara_mc.gotoAndPlay("standby");
+this.back_mc.gotoAndPlay("standby");

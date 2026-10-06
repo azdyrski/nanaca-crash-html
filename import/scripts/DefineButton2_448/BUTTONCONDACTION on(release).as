@@ -1,0 +1,10 @@
+on(release){
+   if(_parent.allpausetoggle())
+   {
+      this.gotoAndStop("pause");
+   }
+   else
+   {
+      this.gotoAndStop("normal");
+   }
+}

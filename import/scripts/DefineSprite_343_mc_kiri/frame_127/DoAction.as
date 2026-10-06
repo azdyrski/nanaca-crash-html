@@ -1,0 +1,10 @@
+control.slow(30,0.002);
+control.vx = (this.px + 2.1666666666666665 - control.px) / 0.034;
+control.vy = 0;
+control.nogravity = true;
+control.py = 2.3333333333333335;
+this.taichi_mc._x += 20;
+this.taichi_mc._y += -20;
+this.taichi_mc.dx = 3.235294117647059;
+this.taichi_mc.dy = -1.7647058823529411;
+taichi_mc.dr = 3;

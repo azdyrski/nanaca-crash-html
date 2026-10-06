@@ -1,0 +1,10 @@
+code = control.characode;
+hity = 0.8333333333333334;
+hitx = 0.16666666666666666;
+var power = 11;
+var angle = 20;
+var s_power = 25;
+var s_angle = 30;
+crashmaxx = 526;
+specialmaxx = 605.65;
+blockmaxx = 245.8;
