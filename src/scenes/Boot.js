@@ -10,6 +10,7 @@ export class Boot extends Phaser.Scene {
         this.load.setPath('assets/');
         ASSETS.images.forEach(k => this.load.image(k, `img/${k}.png`));
         ASSETS.audio.forEach(k => this.load.audio(k, `audio/${k}.mp3`));
+        Object.entries(ASSETS.extracted).forEach(([key, path]) => this.load.image(key, path));
     }
 
     create() {

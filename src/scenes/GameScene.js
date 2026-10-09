@@ -6,6 +6,7 @@ import { FONT } from '../data/assets.js';
 const PX = 150;
 const STEP_MS = INTERVAL * 1000;
 const CHAR_H = 180;
+const FOREST_WIDTH = 760;
 
 export class GameScene extends Phaser.Scene {
     constructor() { super('Game'); }
@@ -33,11 +34,17 @@ export class GameScene extends Phaser.Scene {
         this.meterAngle = 0;
         this.power = 0;
         this.t0 = 0;
-        this.gy = 620;
+        this.gy = 550;
+        this.menuOpen = false;
+        this.ignoreNextPointerUp = false;
 
         this.cameras.main.setBackgroundColor('#8fd0ff');
+        this.add.image(w / 2, h / 2, 'flashSky').setDisplaySize(w, h);
         this.clouds = [this.add.image(300, 120, 'cloud1'), this.add.image(900, 200, 'cloud2')];
-        this.mountain = this.add.tileSprite(w / 2, 0, w, this.textures.get('mountain').getSourceImage().height, 'mountain').setOrigin(0.5, 1);
+        this.forests = [-FOREST_WIDTH, 0, FOREST_WIDTH, FOREST_WIDTH * 2].map(x =>
+            this.add.image(x + FOREST_WIDTH / 2, 620, 'flashForest')
+                .setOrigin(0.5, 1)
+                .setDisplaySize(FOREST_WIDTH, 575));
         this.ground = this.add.rectangle(w / 2, 0, w, 400, 0x6b6b6b).setOrigin(0.5, 0);
         this.rail = this.add.tileSprite(w / 2, 0, w * 5, 128, 'guardrail').setOrigin(0.5, 1);
         this.world = this.add.container(0, 0);
@@ -49,27 +56,111 @@ export class GameScene extends Phaser.Scene {
         this.world.add(this.nanaka);
 
         this.arrow = this.add.triangle(0, 0, 0, -12, 80, 0, 0, 12, 0xff3060).setOrigin(0, 0.5);
+        this.targetMarker = this.add.image(w * 0.68, h * 0.36, 'targetMarker')
+            .setDisplaySize(150, 50);
+        this.targetLabel = this.add.text(w * 0.68, h * 0.25, 'TARGET', {
+            ...this.style(40), color: '#050505', stroke: '#fff', strokeThickness: 2,
+        }).setOrigin(0.5);
+        this.targetCharacter = this.add.image(w * 0.68, this.gy, 'taichi')
+            .setOrigin(0.5, 1)
+            .setDisplaySize(110, 232);
+        this.contactLabel = this.add.text(24, h * 0.36, '1st Contact', {
+            ...this.style(38), color: '#050505', stroke: '#fff', strokeThickness: 2,
+        });
+        this.contactSubLabel = this.add.text(24, h * 0.42, 'Monday Morning', {
+            ...this.style(26), color: '#050505', stroke: '#fff', strokeThickness: 2,
+        });
+        this.contactRule = this.add.graphics().lineStyle(2, 0x050505, 1)
+            .lineBetween(24, h * 0.414, 338, h * 0.414)
+            .lineBetween(24, h * 0.46, 338, h * 0.46);
+
+        this.angleDial = this.add.image(w * 0.29, h * 0.39, 'angleDial')
+            .setDisplaySize(142, 142);
+        this.angleNeedle = this.add.image(w * 0.29, h * 0.39, 'angleNeedle')
+            .setDisplaySize(125, 21)
+            .setOrigin(0, 0.5);
+        this.pressLabel = this.add.image(w * 0.29, h * 0.52, 'pressLabel')
+            .setDisplaySize(150, 24);
+        this.releaseLabel = this.add.text(w * 0.29, h * 0.52, 'RELEASE!!', {
+            ...this.style(28), color: '#ed332b', stroke: '#fff', strokeThickness: 1,
+        }).setOrigin(0.5).setVisible(false);
+
         this.meter = this.add.rectangle(w / 2 - 150, h - 40, 0, 24, 0xff3060).setOrigin(0, 0.5);
         this.meterBox = this.add.rectangle(w / 2 - 150, h - 40, 300, 24).setOrigin(0, 0.5).setStrokeStyle(3, 0xffffff);
-        this.hint = this.add.text(w / 2, h - 80, 'CLICK to lock ANGLE, hold for POWER, release to launch', this.style(28)).setOrigin(0.5);
+        this.hint = this.add.text(w / 2, h - 80, 'CLICK to lock ANGLE, hold for POWER, release to launch', this.style(28))
+            .setOrigin(0.5).setVisible(false);
 
-        const hud = this.style(42);
-        this.scoreText = this.add.text(20, 10, '', hud);
-        this.bestText = this.add.text(20, 60, '', this.style(30));
-        this.speedText = this.add.text(w - 20, 10, '', this.style(30)).setOrigin(1, 0);
-        this.aerialText = this.add.text(w - 20, 50, '', this.style(26)).setOrigin(1, 0);
-        this.cffText = this.add.text(w - 20, 90, '', this.style(26)).setOrigin(1, 0);
-        this.add.text(w - 20, h - 20, 'ESC: menu', this.style(20)).setOrigin(1, 1);
+        this.createHud(w, h);
 
         this.promptText = this.add.text(w / 2, h / 2 - 100, 'SPECIAL! CLICK!', { ...this.style(80), color: '#ffe040' })
             .setOrigin(0.5).setVisible(false).setDepth(10);
 
-        this.input.on('pointerdown', () => this.onDown());
-        this.input.on('pointerup', () => this.onUp());
+        this.input.on('pointerdown', pointer => this.onDown(pointer));
+        this.input.on('pointerup', pointer => this.onUp(pointer));
         this.input.keyboard.on('keydown-SPACE', () => this.onDown());
         this.input.keyboard.on('keyup-SPACE', () => this.onUp());
-        this.input.keyboard.on('keydown-ESC', () => this.scene.start('Title'));
+        this.input.keyboard.on('keydown-ESC', () => this.toggleMenu());
         this.layout();
+    }
+
+    createHud(w, h) {
+        const darkText = { ...this.style(23), color: '#050505', stroke: '#fff', strokeThickness: 1.5 };
+        this.menuButton = this.add.text(24, 10, 'MENU', {
+            ...this.style(26), color: '#050505', stroke: '#fff', strokeThickness: 2,
+            backgroundColor: '#fff', padding: { x: 16, y: 4 },
+        }).setInteractive({ useHandCursor: true })
+            .on('pointerup', (pointer, x, y, event) => {
+                event.stopPropagation();
+                this.toggleMenu();
+            });
+
+        this.aerialLabel = this.add.image(100, 80, 'aerialLabel').setDisplaySize(106, 28);
+        this.upperIcon = this.add.image(40, 117, 'upperArrow').setDisplaySize(18, 23);
+        this.upperText = this.add.text(62, 102, '×3', darkText);
+        this.downerIcon = this.add.image(40, 148, 'downerArrow').setDisplaySize(28, 19);
+        this.downerText = this.add.text(62, 134, '0%', darkText);
+
+        const labelStyle = { ...this.style(23), color: '#050505', stroke: '#fff', strokeThickness: 1 };
+        const right = w - 24;
+        this.bestLabel = this.add.text(right - 208, 8, 'BEST RECORD:', labelStyle).setOrigin(1, 0);
+        this.bestText = this.add.text(right, 8, '', labelStyle).setOrigin(1, 0);
+        this.recordLabel = this.add.text(right - 208, 33, 'RECORD:', labelStyle).setOrigin(1, 0);
+        this.scoreText = this.add.text(right, 33, '', labelStyle).setOrigin(1, 0);
+        this.speedText = this.add.text(right, 57, '', labelStyle).setOrigin(1, 0);
+
+        this.specialStrip = this.add.image(right - 54, 106, 'specialLabel')
+            .setDisplaySize(118, 18);
+        const faces = ['misatoFace', 'toukoFace', 'kiriFace', 'mikiFace', 'youkoFace', 'nanakaFace'];
+        this.specialFaces = faces.map((key, index) =>
+            this.add.image(right - 103 + index * 20, 132, key).setDisplaySize(21, 22));
+
+        this.cffText = this.add.text(right, 84, '', darkText).setOrigin(1, 0);
+
+        this.menuPanel = this.add.rectangle(w / 2, h / 2, 390, 235, 0x101018, 0.92)
+            .setStrokeStyle(3, 0xffffff).setDepth(19).setVisible(false);
+        this.menuTitle = this.add.text(w / 2, h / 2 - 75, 'PAUSED', this.style(48))
+            .setOrigin(0.5).setDepth(20).setVisible(false);
+        this.resumeButton = this.menuAction(w / 2, h / 2 - 5, 'RESUME', () => this.toggleMenu());
+        this.titleButton = this.menuAction(w / 2, h / 2 + 65, 'TITLE', () => this.scene.start('Title'));
+    }
+
+    menuAction(x, y, label, action) {
+        return this.add.text(x, y, label, {
+            ...this.style(32), backgroundColor: '#e0508a', padding: { x: 20, y: 6 },
+        }).setOrigin(0.5).setDepth(20).setInteractive({ useHandCursor: true })
+            .on('pointerup', (pointer, localX, localY, event) => {
+                event.stopPropagation();
+                this.ignoreNextPointerUp = true;
+                this.time.delayedCall(0, () => { this.ignoreNextPointerUp = false; });
+                action();
+            }).setVisible(false);
+    }
+
+    toggleMenu() {
+        if (this.phase === 'over') return;
+        this.menuOpen = !this.menuOpen;
+        [this.menuPanel, this.menuTitle, this.resumeButton, this.titleButton]
+            .forEach(object => object.setVisible(this.menuOpen));
     }
 
     style(size) {
@@ -77,7 +168,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     // ---- input -------------------------------------------------------------
-    onDown() {
+    onDown(pointer) {
+        if (this.menuOpen || (pointer && this.menuButton.getBounds().contains(pointer.x, pointer.y))) return;
         const c = this.control;
         if (this.promptCb) { this.resolvePrompt(true); return; }
         if (this.phase === 'angle') {
@@ -89,7 +181,14 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    onUp() { this.launch(); }
+    onUp(pointer) {
+        if (this.ignoreNextPointerUp) {
+            this.ignoreNextPointerUp = false;
+            return;
+        }
+        if (this.menuOpen || (pointer && this.menuButton.getBounds().contains(pointer.x, pointer.y))) return;
+        this.launch();
+    }
 
     launch() {
         if (this.phase !== 'power') return;
@@ -99,6 +198,16 @@ export class GameScene extends Phaser.Scene {
         if (c.vx + c.vy < 0.5) c.launch(this.angle, 10);
         this.hint.setVisible(false);
         this.arrow.setVisible(false);
+        this.targetMarker.setVisible(false);
+        this.targetLabel.setVisible(false);
+        this.targetCharacter.setVisible(false);
+        this.contactLabel.setVisible(false);
+        this.contactSubLabel.setVisible(false);
+        this.contactRule.setVisible(false);
+        this.angleDial.setVisible(false);
+        this.angleNeedle.setVisible(false);
+        this.pressLabel.setVisible(false);
+        this.releaseLabel.setVisible(false);
         this.meter.setVisible(false);
         this.meterBox.setVisible(false);
         this.player.setTexture('taichi');
@@ -188,7 +297,7 @@ export class GameScene extends Phaser.Scene {
             this.power = Math.min(v, 200 - v);
         }
 
-        if ((this.phase === 'fly' || this.phase === 'ending') && !this.promptCb) {
+        if ((this.phase === 'fly' || this.phase === 'ending') && !this.promptCb && !this.menuOpen) {
             this.acc = Math.min(this.acc + delta, STEP_MS * 5);
             while (this.acc >= STEP_MS && this.phase === 'fly') {
                 this.acc -= STEP_MS;
@@ -278,9 +387,15 @@ export class GameScene extends Phaser.Scene {
     layout() {
         const c = this.control;
         const s = c.scale / 100;
-        const gy = this.gy = 620 + Math.max(0, c.py * PX * s - 250);
+        const gy = this.gy = 550 + Math.max(0, c.py * PX * s - 250);
         const worldX = 380 - c.px * PX * s;
         this.world.setPosition(worldX, gy).setScale(s);
+        const forestOffset = ((c.px * PX * 0.12) % FOREST_WIDTH + FOREST_WIDTH) % FOREST_WIDTH;
+        this.forests.forEach((forest, index) => {
+            forest.x = index * FOREST_WIDTH - FOREST_WIDTH / 2 + forestOffset;
+            forest.y = gy;
+        });
+        this.targetCharacter.setY(gy);
 
         const flying = this.phase !== 'angle' && this.phase !== 'power';
         if (flying) {
@@ -303,18 +418,30 @@ export class GameScene extends Phaser.Scene {
         this.rail.setPosition(this.scale.width / 2, gy);
         this.rail.setScale(s);
         this.rail.tilePositionX = c.px * PX;
-        this.mountain.setPosition(this.scale.width / 2, gy);
-        this.mountain.tilePositionX = c.px * PX * 0.1;
         this.clouds.forEach((cl, i) => {
             cl.x = ((cl.x - 0.2 * (i + 1) * 0.3 * (c.vx > 0 ? 1 + c.vx / 10 : 0) + 200) % (this.scale.width + 400)) - 200;
         });
 
-        this.scoreText.setText(GameControl.format(c.px));
-        this.bestText.setText(`BEST ${GameControl.format(c.best)}`);
-        this.bestText.setColor(c.best > this.best0 ? '#ff6060' : '#ffffff');
-        this.speedText.setText(`${Math.round(Math.hypot(c.vx, c.vy) * 10)} km/h`);
-        this.aerialText.setText(this.phase === 'fly' ? `UPPER x${this.upper}   DOWNER ${Math.floor(this.downer)}%` : '');
+        this.scoreText.setText(`${GameControl.format(c.px)}m`);
+        this.bestText.setText(`${GameControl.format(c.best)}m`);
+        this.bestText.setColor(c.best > this.best0 ? '#df1825' : '#050505');
+        this.speedText.setText(`${GameControl.format(Math.hypot(c.vx, c.vy))}m/s`);
+        this.upperText.setText(`×${this.upper}`);
+        this.downerText.setText(`${Math.floor(this.downer)}%`);
         this.cffText.setText(c.cffs === null ? '' : `CFF ${['A', 'B', 'C', 'D'][c.cffs]}: ${Math.ceil(c.cffcount)}`);
         this.cffText.setColor(c.cffs === null ? '#fff' : '#' + CFF_COLORS[c.cffs].toString(16).padStart(6, '0'));
+
+        const preparing = this.phase === 'angle' || this.phase === 'power';
+        this.targetMarker.setVisible(preparing);
+        this.targetLabel.setVisible(preparing);
+        this.targetCharacter.setVisible(preparing);
+        this.contactLabel.setVisible(preparing);
+        this.contactSubLabel.setVisible(preparing);
+        this.contactRule.setVisible(preparing);
+        this.angleDial.setVisible(preparing);
+        this.angleNeedle.setVisible(preparing);
+        this.pressLabel.setVisible(this.phase === 'angle');
+        this.releaseLabel.setVisible(this.phase === 'power');
+        this.angleNeedle.setRotation(-Phaser.Math.DegToRad(this.phase === 'power' ? this.angle : this.meterAngle));
     }
 }
